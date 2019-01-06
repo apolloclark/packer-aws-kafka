@@ -1,4 +1,4 @@
-# packer-aws-logstash
+# packer-aws-kafka
 
 Packer based project for provisioning a "Kafka" image using Ansible remote, 
 and Serverspc, for AWS, or Virtualbox, with Elastic monitoring.
