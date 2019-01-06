@@ -10,4 +10,5 @@
     - vars.yml
   roles:
     - geerlingguy.firewall
-    - apolloclark.logstash
+    - apolloclark.kafka
+    - apolloclark.zookeeper
