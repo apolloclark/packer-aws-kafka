@@ -1,0 +1,96 @@
+{
+  "variables": {
+    "ansible_user": "vagrant",
+  	"atlas_box_tag": "apolloclark/ubuntu16.04-elk",
+    "atlas_token": "{{ env `ATLAS_TOKEN` }}",
+    "cpus": "1",
+    "headless": "true",
+    "memory": "4096",
+    "hostname": "vagrant",
+    "project_name": "packer-aws-elk",
+    "source_path": "../../packer-aws-java/base/output/vmware/ubuntu1604-java.vmx",
+    "ssh_password": "vagrant",
+    "ssh_username": "vagrant",
+    "vagrantfile_template": "vagrantfile.tpl",
+    "vm_name": "ubuntu1604-elk",
+    "version": "{{isotime \"20060102.030405\"}}",
+    "version_simple": "{{isotime \"20060102\"}}"
+  },
+  "builders": [
+    {
+      "type": "vmware-vmx",
+      "source_path": "{{ user `source_path` }}",
+      "headless": "{{ user `headless` }}",
+      "output_directory": "output/vmware",
+      "shutdown_command": "echo '{{ user `ssh_password` }}'|sudo -S shutdown -P now",
+      "ssh_password": "{{ user `ssh_password` }}",
+      "ssh_username": "{{ user `ssh_username` }}",
+      "ssh_wait_timeout": "600s",
+      "tools_upload_flavor": "linux",
+      "vmx_data": {
+        "memsize": "{{ user `memory` }}",
+        "numvcpus": "{{ user `cpus` }}",
+        "ethernet0.present": true,
+        "ethernet0.startConnected": true,
+        "ethernet0.connectionType": "custom",
+        "ethernet0.vnet": "vmnet8"
+      },
+      "vmx_remove_ethernet_interfaces": true,
+      "vm_name": "{{user `vm_name`}}"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "ansible-local",
+      "playbook_dir": "./ansible",
+      "galaxy_file": "./ansible/requirements.yml",
+      "playbook_file": "./ansible/playbook.yml"
+    },
+    {
+	  "type": "file",
+	  "source": "restart_elk_services.sh",
+	  "destination": "/home/vagrant/restart_elk_services.sh"
+	},
+    {
+	  "type": "file",
+	  "source": "check_elk_services.sh",
+	  "destination": "/home/vagrant/check_elk_services.sh"
+	},
+    {
+      "type": "shell",
+      "execute_command": "echo '{{ user `ssh_password` }}' | sudo -E -S bash '{{.Path}}'",
+      "scripts": [
+        "restart_elk_services.sh",
+        "check_elk_services.sh"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "./serverspec",
+      "destination": "/tmp/"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "cd /tmp/serverspec; rake spec"
+      ]
+    }
+  ],
+  "post-processors": [
+    [
+      {
+        "type": "vagrant",
+        "keep_input_artifact": true,
+        "output": "box/{{.Provider}}/{{user `vm_name`}}-{{user `version_simple`}}.box",
+        "vagrantfile_template": "{{ user `vagrantfile_template` }}"
+      },
+	  {
+	    "type": "vagrant-cloud",
+	    "box_tag": "{{user `atlas_box_tag`}}",
+	    "access_token": "{{user `atlas_token`}}",
+	    "no_release": "false",
+	    "version": "{{user `version_simple`}}"
+	  }
+	]
+  ]
+}

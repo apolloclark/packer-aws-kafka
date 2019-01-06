@@ -1,0 +1,5 @@
+# http://docs.ansible.com/ansible/latest/galaxy.html#installing-multiple-roles-from-a-file
+---
+- src: geerlingguy.firewall
+- src: apolloclark.zookeeper          # https://github.com/apolloclark/ansible-role-zookeeper
+- src: apolloclark.kafka              # https://github.com/apolloclark/ansible-role-kafka
