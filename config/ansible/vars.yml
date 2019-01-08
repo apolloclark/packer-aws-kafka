@@ -6,13 +6,8 @@ hostname: all
 firewall_allowed_tcp_ports:
   - "22"
   - "25"
-  - "80"
   - "2181" # Zookeeper
-  - "5044" # Logstash
-  - "5601" # Kibana
   - "9092" # Kafka
-  - "9200" # Elasticsearch
-  - "9300" # Elasticsearch
 
 # geerlingguy/java
 java_packages:
@@ -20,17 +15,10 @@ java_packages:
 
 
 
-es_ip: "127.0.0.1"
 kafka_ip: "127.0.0.1"
-logstash_ip: "127.0.0.1"
-kibana_ip: "127.0.0.1"
+es_ip: "127.0.0.1"
 
 
-
-# apolloclark/crontab
-crontab:
-  global:
-    - "@reboot root /home/vagrant/restart_elk_services.sh"
 
 # apolloclark/kafka
 kafka:
@@ -45,126 +33,47 @@ heartbeat:
       schedule: "'@every 5s'"
       urls: '["http://localhost:80", "http://localhost:5601"]'
   output:
-    elasticsearch:
-      enabled: false
-      hosts:
-       - "{{ es_ip }}:9200"
     kafka:
       enabled: true
       hosts:
        - "{{ kafka_ip }}:9092"
-  setup:
-    dashboards:
-      enabled: true
-    template:
-      enabled: true
-    kibana:
-      host: "{{ kibana_ip }}:5601"
 
 # apolloclark/metricbeat
 metricbeat:
   version: "6.4.2"
   output:
-    elasticsearch:
-      enabled: false
-      hosts:
-       - "{{ es_ip }}:9200"
     kafka:
       enabled: true
       hosts:
        - "{{ kafka_ip }}:9092"
-  setup:
-    dashboards:
-      enabled: true
-    template:
-      enabled: true
-    kibana:
-      host: "{{ kibana_ip }}:5601"
 
 # apolloclark/packetbeat
 packetbeat:
   version: "6.4.2"
   protocols:
-    http:
+    tcp:
       enabled: true
-      ports: '[80,5601,9200]'
+      ports: '[22,2181,9092]'
   output:
-    elasticsearch:
-      enabled: false
-      hosts:
-       - "{{ es_ip }}:9200"
     kafka:
       enabled: true
       hosts:
        - "{{ kafka_ip }}:9092"
-  setup:
-    dashboards:
-      enabled: true
-    template:
-      enabled: true
-    kibana:
-      host: "{{ kibana_ip }}:5601"
 
 # apolloclark/filebeat
 filebeat:
   version: "6.4.2"
   output:
-    elasticsearch:
-      enabled: false
-      hosts:
-       - "{{ es_ip }}:9200"
     kafka:
       enabled: true
       hosts:
        - "{{ kafka_ip }}:9092"
-  setup:
-    dashboards:
-      enabled: true
-    template:
-      enabled: true
-    kibana:
-      host: "{{ kibana_ip }}:5601"
 
 # apolloclark/auditbeat
 auditbeat:
   version: "6.4.2"
   output:
-    elasticsearch:
-      enabled: false
-      hosts:
-       - "{{ es_ip }}:9200"
     kafka:
       enabled: true
       hosts:
        - "{{ kafka_ip }}:9092"
-  setup:
-    dashboards:
-      enabled: true
-    template:
-      enabled: true
-    kibana:
-      host: "{{ kibana_ip }}:5601"
-
-# apolloclark/elasticsearch
-# BINDING TO 0.0.0.0 IS DANGEROUS, UNLESS YOU ENFORCE FIREWALL RULES
-# OR USE X-PACK
-elasticsearch:
-  version: "6.4.2"
-  network:
-    host: "0.0.0.0"
-    bind_host: "0.0.0.0"
-    publish_host: "_local_"
-  action:
-    destructive_requires_name: false
-  install_plugins: []
-
-# apolloclark/logstash
-logstash:
-  version: "6.4.2"
-  input_conf: "{{ playbook_dir }}/files/10-beats-input.conf"
-  filter_conf: "{{ playbook_dir }}/files/20-syslog-filter.conf"
-  output_conf: "{{ playbook_dir }}/files/30-elasticsearch-output.conf"
-
-# apolloclark/kibana
-kibana:
-  version: "6.4.2"
